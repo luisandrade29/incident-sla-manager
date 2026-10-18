@@ -50,3 +50,7 @@ $RECYCLE.BIN/
 # Claude Code / graphy
 .claude/
 graphy-out/
+
+# Dumps locais de logs e dados de teste
+EmailLog*.csv
+*.local.apex
