@@ -36,3 +36,34 @@ The full README (architecture, components, API docs) is written in the final del
 - **Case Classifier guard.** The classifier trigger now skips `Incident_IT` (separate commit in that repository), so neither incidents nor the batch create classifier jobs. The batch tests insert cases *with* Subject and Description and assert that no `CaseClassifierQueueable` job exists.
 - **Scale.** Planning reads up to 50 000 open Critical/High incidents in `start()` (one query, no SOQL in loops); `execute()` uses scope 200 with one update and one comment insert per chunk. Above 50 000, replace with an aggregate per queue.
 - **Scheduling.** `scripts/apex/schedule-escalation.apex` schedules the batch hourly (`0 0 * * * ?`).
+
+## Notes from Section 5 (REST API: `SLAStatusService`)
+
+`GET /services/apexrest/incidents/v1/sla-status` returns counts of open IT incidents by SLA state, grouped by `Case.Type`. It never returns Subject, names, emails or owners. Authentication is the standard Salesforce OAuth bearer token; the caller needs the `Incident_Manager` permission set (access to the class and to cases).
+
+```bash
+curl -s -H "Authorization: Bearer <ACCESS_TOKEN>" \
+     "<ORG_URL>/services/apexrest/incidents/v1/sla-status"
+```
+
+Example response (fictional data):
+
+```json
+{
+  "generated_at": "2026-10-18T17:54:30.982Z",
+  "truncated": false,
+  "groups": [
+    { "type": "Infrastructure", "queue": "Infrastructure_Queue", "within_sla": 12, "near_breach": 3, "breached": 1, "total_open": 16, "no_sla": 2 },
+    { "type": "Network",        "queue": "Network_Queue",        "within_sla": 5,  "near_breach": 0, "breached": 0, "total_open": 5,  "no_sla": 0 },
+    { "type": "Security",       "queue": "Security_Queue",       "within_sla": 2,  "near_breach": 1, "breached": 2, "total_open": 5,  "no_sla": 1 }
+  ]
+}
+```
+
+- **Why group by Type and not by owner.** When a technician picks up a case its owner changes from the queue to a person, so owner-based counts would move cases out of the queue figures. `Type` is stable for the life of the incident. An empty or unknown Type counts as Infrastructure, the same rule as the `Incident_Assign_Owner` flow, and `queue` shows the queue that Type routes to.
+- **States.** `breached`: `IsViolated` is true, or now is past `TargetDate` (this covers the ~1 minute SLA engine delay). `near_breach`: not breached and at least 75% of the time between `StartDate` and `TargetDate` has elapsed. `within_sla`: the rest.
+- **`total_open` vs `no_sla`.** `total_open` is open `Incident_IT` cases *with at least one open Milestone* (`within_sla + near_breach + breached`). `no_sla` is open cases with no open Milestone at all (for example no Entitlement); they are not part of `total_open`.
+- **Assumptions.** The 75% uses elapsed wall-clock time, which is correct because the Business Hours are 24x7 (it would be wrong for a business-hours calendar). If a case has more than one open Milestone, its worst state is counted, and each case counts once.
+- **Limits.** One query to `CaseMilestone` with `LIMIT 10000` (to stay far from the query-row and 6 MB heap limits) plus one aggregate query for `no_sla`, both `WITH USER_MODE`. If the limit is reached, `truncated` is `true` and the counts are partial.
+- **Errors.** Body `{"code": "...", "error": "..."}`: `403 FORBIDDEN` when the user cannot read the data (user-mode query failure), `500 INTERNAL_ERROR` for anything unexpected (the exception message is never exposed). Other HTTP methods are rejected by the platform; verified against the org: `POST`, `PUT`, `PATCH` and `DELETE` return **405** with `Allow: GET,HEAD` and the platform's own body `[{"errorCode":"METHOD_NOT_ALLOWED","message":"HTTP Method 'PUT' not allowed. Allowed are GET,HEAD"}]` (a JSON array, not the `{code,error}` shape above).
+- **Tests.** `SLAStatusServiceTest` tests classification and aggregation with in-memory rows (no Entitlement Process needed) plus the REST handler (200, 403, 500). `SLAStatusServiceIntegrationTest` creates 200 real cases and moves the clock to check each state; **it depends on the deployed metadata** `Incident_SLA_Test_Process`, the `Incident_Manager` permission set and the `Incident_Assign_Owner` flow.
