@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
-    <label>Incident Manager</label>
     <description>Acesso de gestão a Incidentes de TI (Case, Entitlement, Record Type)</description>
     <hasActivationRequired>false</hasActivationRequired>
+    <label>Incident Manager</label>
+    <fieldPermissions><field>Case.AccountId</field><editable>true</editable><readable>true</readable></fieldPermissions>
+    <fieldPermissions><field>Case.EntitlementId</field><editable>true</editable><readable>true</readable></fieldPermissions>
+    <fieldPermissions><field>Case.Last_Escalated_At__c</field><editable>true</editable><readable>true</readable></fieldPermissions>
+    <fieldPermissions><field>Case.Priority</field><editable>true</editable><readable>true</readable></fieldPermissions>
+    <fieldPermissions><field>Case.Routing_Note__c</field><editable>true</editable><readable>true</readable></fieldPermissions>
+    <fieldPermissions><field>Case.SLA_Alert_Status__c</field><editable>true</editable><readable>true</readable></fieldPermissions>
+    <fieldPermissions><field>Case.Type</field><editable>true</editable><readable>true</readable></fieldPermissions>
     <objectPermissions><object>Case</object><allowCreate>true</allowCreate><allowRead>true</allowRead><allowEdit>true</allowEdit><allowDelete>false</allowDelete><viewAllRecords>true</viewAllRecords><modifyAllRecords>false</modifyAllRecords></objectPermissions>
     <objectPermissions><object>Entitlement</object><allowCreate>false</allowCreate><allowRead>true</allowRead><allowEdit>false</allowEdit><allowDelete>false</allowDelete><viewAllRecords>false</viewAllRecords><modifyAllRecords>false</modifyAllRecords></objectPermissions>
     <objectPermissions><object>Account</object><allowCreate>false</allowCreate><allowRead>true</allowRead><allowEdit>false</allowEdit><allowDelete>false</allowDelete><viewAllRecords>false</viewAllRecords><modifyAllRecords>false</modifyAllRecords></objectPermissions>
-    <fieldPermissions><field>Case.Priority</field><editable>true</editable><readable>true</readable></fieldPermissions>
-    <fieldPermissions><field>Case.Type</field><editable>true</editable><readable>true</readable></fieldPermissions>
-    <fieldPermissions><field>Case.Routing_Note__c</field><editable>true</editable><readable>true</readable></fieldPermissions>
-    <fieldPermissions><field>Case.EntitlementId</field><editable>true</editable><readable>true</readable></fieldPermissions>
-    <fieldPermissions><field>Case.SLA_Alert_Status__c</field><editable>true</editable><readable>true</readable></fieldPermissions>
-    <fieldPermissions><field>Case.AccountId</field><editable>true</editable><readable>true</readable></fieldPermissions>
+    <objectPermissions><object>CaseComment</object><allowCreate>true</allowCreate><allowRead>true</allowRead><allowEdit>false</allowEdit><allowDelete>false</allowDelete><viewAllRecords>false</viewAllRecords><modifyAllRecords>false</modifyAllRecords></objectPermissions>
     <recordTypeVisibilities><recordType>Case.Incident_IT</recordType><visible>true</visible></recordTypeVisibilities>
 </PermissionSet>

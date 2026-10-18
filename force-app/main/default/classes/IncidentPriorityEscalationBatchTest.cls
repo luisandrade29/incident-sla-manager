@@ -1,0 +1,174 @@
+@IsTest
+private class IncidentPriorityEscalationBatchTest {
+
+    @TestSetup
+    static void setup() {
+        IncidentTestUtil.createManager();
+    }
+
+    // Os casos têm Subject e Description de propósito: provam que o guard do Case Classifier ignora o Record Type Incident_IT.
+    private static List<Case> insertCases(Integer count, String type, String priority) {
+        List<Case> cases = new List<Case>();
+        for (Integer i = 0; i < count; i++) {
+            cases.add(new Case(
+                Subject = 'Incidente de teste ' + type + ' ' + i,
+                Description = 'Descrição de teste',
+                Type = type,
+                Priority = priority
+            ));
+        }
+        System.runAs(IncidentTestUtil.getManager()) {
+            insert cases;
+        }
+        return cases;
+    }
+
+    private static void runBatch() {
+        Test.startTest();
+        System.runAs(IncidentTestUtil.getManager()) {
+            Database.executeBatch(new IncidentPriorityEscalationBatch(), IncidentPriorityEscalationBatch.SCOPE_SIZE);
+        }
+        Test.stopTest();
+    }
+
+    // As consultas correm como o gestor: o campo Last_Escalated_At__c só é legível com o Permission Set.
+    private static Integer countByPriority(String type, String priority) {
+        Integer n;
+        System.runAs(IncidentTestUtil.getManager()) {
+            n = [SELECT COUNT() FROM Case WHERE Type = :type AND Priority = :priority];
+        }
+        return n;
+    }
+
+    private static Integer countEscalated() {
+        Integer n;
+        System.runAs(IncidentTestUtil.getManager()) {
+            n = [SELECT COUNT() FROM Case WHERE Last_Escalated_At__c != null];
+        }
+        return n;
+    }
+
+    private static List<CaseComment> comments() {
+        List<CaseComment> result;
+        System.runAs(IncidentTestUtil.getManager()) {
+            result = [SELECT CommentBody, IsPublished FROM CaseComment];
+        }
+        return result;
+    }
+
+    private static void assertNoClassifierJobs() {
+        System.assertEquals(0, [SELECT COUNT() FROM AsyncApexJob WHERE ApexClass.Name = 'CaseClassifierQueueable'],
+            'O batch e os incidentes não podem criar jobs do Case Classifier');
+    }
+
+    @IsTest
+    static void escalatesOnlyTheExcessAmong200Cases() {
+        insertCases(200, 'Infrastructure', 'High');
+        IncidentPriorityEscalationBatch.thresholdOverride = new Map<String, Integer>{ 'Default' => 999, 'Infrastructure_Queue' => 150 };
+
+        runBatch();
+
+        System.assertEquals(50, countByPriority('Infrastructure', 'Critical'), 'Só o excesso (200 - 150) sobe');
+        System.assertEquals(150, countByPriority('Infrastructure', 'High'));
+        System.assertEquals(50, countEscalated());
+
+        List<CaseComment> comments = comments();
+        System.assertEquals(50, comments.size(), 'Um comentário por caso escalado');
+        for (CaseComment cc : comments) {
+            System.assertEquals(false, cc.IsPublished, 'O comentário tem de ser interno');
+            System.assert(cc.CommentBody.contains('Infraestrutura') && cc.CommentBody.contains('Milestone'), cc.CommentBody);
+        }
+        System.assertEquals(1, [SELECT JobItemsProcessed FROM AsyncApexJob WHERE ApexClass.Name = 'IncidentPriorityEscalationBatch' AND JobType = 'BatchApex' LIMIT 1].JobItemsProcessed,
+            '200 casos cabem num único scope');
+        assertNoClassifierJobs();
+    }
+
+    @IsTest
+    static void alreadyEscalatedCasesAreIgnored() {
+        List<Case> cases = insertCases(4, 'Infrastructure', 'High');
+        // Marca dois como já escalados antes de correr o batch.
+        for (Integer i = 0; i < 2; i++) {
+            cases[i].Last_Escalated_At__c = Datetime.now().addDays(-1);
+        }
+        System.runAs(IncidentTestUtil.getManager()) {
+            update cases;
+        }
+        IncidentPriorityEscalationBatch.thresholdOverride = new Map<String, Integer>{ 'Default' => 2 };
+
+        runBatch();
+
+        System.assertEquals(2, countByPriority('Infrastructure', 'Critical'), 'Só os dois ainda não escalados sobem');
+        System.assertEquals(2, comments().size());
+        assertNoClassifierJobs();
+    }
+
+    @IsTest
+    static void doesNotChainOnASecondRunWhenEveryCaseWasAlreadyEscalated() {
+        // Estado em que ficam os casos depois de uma primeira execução: o excesso continua, mas já ninguém é elegível.
+        List<Case> cases = insertCases(4, 'Infrastructure', 'High');
+        for (Case c : cases) {
+            c.Last_Escalated_At__c = Datetime.now().addHours(-1);
+        }
+        System.runAs(IncidentTestUtil.getManager()) {
+            update cases;
+        }
+        IncidentPriorityEscalationBatch.thresholdOverride = new Map<String, Integer>{ 'Default' => 1 };
+
+        runBatch();
+
+        System.assertEquals(4, countByPriority('Infrastructure', 'High'), 'Nenhum caso volta a ser escalado');
+        System.assertEquals(0, comments().size());
+    }
+
+    @IsTest
+    static void onlyHighBecomesCriticalAndLimitIsPerQueue() {
+        insertCases(2, 'Infrastructure', 'Critical');
+        insertCases(3, 'Infrastructure', 'High');
+        insertCases(2, 'Infrastructure', 'Normal');
+        insertCases(3, 'Network', 'High');
+        IncidentPriorityEscalationBatch.thresholdOverride = new Map<String, Integer>{ 'Default' => 5, 'Infrastructure_Queue' => 3 };
+
+        runBatch();
+
+        // Infraestrutura: 5 Critical/High, limite 3, excesso 2 -> dois High sobem; Normal e Critical ficam.
+        System.assertEquals(4, countByPriority('Infrastructure', 'Critical'));
+        System.assertEquals(1, countByPriority('Infrastructure', 'High'));
+        System.assertEquals(2, countByPriority('Infrastructure', 'Normal'));
+        // Redes: 3 abaixo do limite Default (5), nada muda.
+        System.assertEquals(3, countByPriority('Network', 'High'));
+    }
+
+    @IsTest
+    static void doesNothingWhenUnderThreshold() {
+        insertCases(3, 'Security', 'High');
+        IncidentPriorityEscalationBatch.thresholdOverride = new Map<String, Integer>{ 'Default' => 10 };
+        runBatch();
+        System.assertEquals(3, countByPriority('Security', 'High'));
+        System.assertEquals(0, comments().size());
+    }
+
+    @IsTest
+    static void usesCustomMetadataDefaultWhenNoOverride() {
+        // Sem override: lê o registo Default de Escalation_Threshold__mdt (10 por defeito).
+        Integer limitInMetadata = Integer.valueOf(Escalation_Threshold__mdt.getInstance('Default').Max_Open_Critical_High__c);
+        insertCases(limitInMetadata + 2, 'Network', 'High');
+
+        runBatch();
+
+        System.assertEquals(2, countByPriority('Network', 'Critical'), 'Excesso de 2 sobre o limite do Custom Metadata');
+    }
+
+    @IsTest
+    static void schedulerRegistersJobAndRunsBatch() {
+        System.runAs(IncidentTestUtil.getManager()) {
+            Test.startTest();
+            Id cronId = IncidentPriorityEscalationScheduler.schedule(IncidentPriorityEscalationScheduler.CRON_HOURLY);
+            System.assertEquals(IncidentPriorityEscalationScheduler.JOB_NAME, [SELECT CronJobDetail.Name FROM CronTrigger WHERE Id = :cronId].CronJobDetail.Name);
+
+            // O agendamento só dispara à hora seguinte; chama-se execute() diretamente para provar que lança o batch.
+            new IncidentPriorityEscalationScheduler().execute(null);
+            Test.stopTest();
+        }
+        System.assert([SELECT COUNT() FROM AsyncApexJob WHERE ApexClass.Name = 'IncidentPriorityEscalationBatch' AND JobType = 'BatchApex'] >= 1, 'O scheduler deve lançar o batch');
+    }
+}
