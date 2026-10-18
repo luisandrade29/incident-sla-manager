@@ -1,58 +1,13 @@
-# Salesforce DX Project
+# Incident SLA Manager
 
-Salesforce DX is a development approach that brings source-driven development, team collaboration, and continuous integration to the Salesforce Platform. Instead of working directly in an org through a web browser, you work with metadata as source files in a local DX project, track changes in version control, and deploy through automated processes.
+Salesforce IT incident management with automatic queue assignment, SLA (Entitlements and Milestones) and escalation.
+The full README (architecture, components, API docs) is written in the final delivery section; this file currently holds the implementation notes found so far.
 
-This project template gets you started with the tools and structure you need to build Salesforce applications using source control, scratch orgs, and the Salesforce CLI.
+## Notes from Section 3 (SLA)
 
-## Prerequisites
-
-Before you start, make sure you have:
-
-- **Salesforce CLI** - Download from [developer.salesforce.com/tools/salesforcecli](https://developer.salesforce.com/tools/salesforcecli). See [Install Salesforce CLI](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm) for details.
-- **VS Code with Salesforce Extension Pack** - See [Installation Instructions](https://developer.salesforce.com/docs/platform/sfvscode-extensions/guide/install.html) for details. Includes the Agentforce Vibes extension.
-- **A development org** - Sign up for a free Developer Edition org [here](https://developer.salesforce.com/signup).
-- **Dev Hub enabled** (optional, required to create scratch orgs) - You can enable Dev Hub in your development org under Setup > Dev Hub.  See [Provide Developers Access to Salesforce DX Tools](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_setup_dx_tools.htm).
-
-## Project Structure
-
-Your DX project follows this structure:
-
-- **`force-app/main/default/`** - Your metadata source files live in this default package directory. You can configure additional package directories in the `sfdx-project.json` file.
-- **`config/`** - Scratch org definitions and project settings
-- **`scripts/`** - Automation scripts for common tasks
-- **`sfdx-project.json`** - Project manifest that defines package directories, namespace, API version, and other project-level settings
-
-See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm).
-
-## Get Started
-
-Ready to start developing? The [Get Started with Salesforce DX](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_get_started_dx.htm) guide walks you through your first project, from creating a scratch org to creating a simple Apex class or LWC to deploying your code to a sandbox.
-
-## Common Salesforce CLI Commands
-
-Here are common CLI commands that you'll use the most:
-
-- `sf org login web`: Authorize an org
-- `sf org open`: Open your org in a browser
-- `sf org create scratch`: Create a scratch org
-- `sf project deploy start`: Deploy metadata to your org
-- `sf project retrieve start`: Retrieve metadata from your org
-- `sf template generate <artifact>`: Scaffold new components, such as Apex classes and triggers, LWC components, Lightning apps, and more
-- `sf apex <command>`: Run Apex tests, run anonymous Apex blocks, and view logs
-- `sf data <command>`: Work with test data
-- `sf alias <command>`: Manage org aliases
-- `sf config <command>`: Configure CLI settings
-
-## Use Agentforce Vibes to Build Lightning Apps
-
-Transform your ideas into custom Lightning apps that extend CRM workflows directly in Lightning Experience. Through natural conversations with Agentforce Vibes, implement custom objects and fields, complex business logic, and dynamic UI components. See [Build a Lightning App Using Agentforce Vibes](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/lexapp-overview.html).
-
-## Additional Resources
-
-- [Agentforce Vibes Developer Guide](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/einstein-overview.html)
-- [Salesforce CLI Installation Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
-- [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/)
-- [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/)
-- [Salesforce CLI Plugin Development Guide](https://developer.salesforce.com/docs/platform/salesforce-cli-plugin/guide/conceptual-overview.html)
-- [Salesforce VS Code Extensions Documentation](https://developer.salesforce.com/tools/vscode/)
-
+- **SLA engine delay (~1 minute).** Milestone time triggers are processed with a latency of about a minute. In the 4-minute test process (`Incident_SLA_Test_Process`), the 75% warning was scheduled for minute 3 and was applied at ~3m55s; the violation was applied ~47s after the target date. Do not expect second-level precision from warning or violation actions.
+- **Entitlement Processes in use cannot be redeployed.** Once an Entitlement points to a process, deploying it again fails with `Cannot update SLA process that is in use`. To change durations, create a new process version. Deploy Apex, triggers and flows separately from `entitlementProcesses/` after the first deploy.
+- **Activation.** `EntitlementProcess` metadata deploys fine on a Developer Edition, but the process is only active with `<active>true</active>`. `SlaProcess.IsActive` is not updatable through the API. After deploying, run `scripts/apex/seed-sla-test.apex` to link the Entitlements to their processes.
+- **Conflict with the Case Classifier.** The `CaseAiClassifier` trigger (separate project) enqueues a chained Queueable for every new Case that has a Subject or Description. For IT incidents this means unwanted AI callouts, and in Apex tests it fails with `Maximum stack depth has been reached`. Tests here create cases without Subject to avoid it; the Case Classifier should skip the `Incident_IT` record type.
+- **Supervisor email is runtime-only.** The recipient of SLA alerts lives in the `Incident_Alert_Setting__mdt` record `Default`, which is excluded in `.forceignore` so a retrieve never pulls a real address into the repository. Set it with `scripts/apex/set-supervisor-email.apex` (edit the value locally, do not commit it).
+- **Milestone completion.** `CaseMilestoneTrigger` completes open milestones when a case becomes closed (Closed or Resolved), so no warning or violation fires afterwards.
