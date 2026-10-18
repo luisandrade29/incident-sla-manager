@@ -11,7 +11,19 @@ The full README (architecture, components, API docs) is written in the final del
 - **Conflict with the Case Classifier.** The `CaseAiClassifier` trigger (separate project) enqueues a chained Queueable for every new Case that has a Subject or Description. For IT incidents this means unwanted AI callouts, and in Apex tests it fails with `Maximum stack depth has been reached`. Tests here create cases without Subject to avoid it; the Case Classifier should skip the `Incident_IT` record type.
 - **Supervisor email is runtime-only.** The recipient of SLA alerts lives in the `Incident_Alert_Setting__mdt` record `Default`, which is excluded in `.forceignore` so a retrieve never pulls a real address into the repository. Set it with `scripts/apex/set-supervisor-email.apex` (edit the value locally, do not commit it).
 - **Milestone completion.** `CaseMilestoneTrigger` completes open milestones when a case becomes closed (Closed or Resolved), so no warning or violation fires afterwards.
-- **Email delivery (under investigation).** The SLA alert email is a best-effort channel. In a 4-minute test both alerts were produced and sent by the org (the logs show `WF_EMAIL_SENT` for the Warning at 17:32:59 and for the Violated at 17:33:59), but only the Violated email reached the mailbox. The Warning email is being traced through the org's Email Log; the alert flow is deliberately left unchanged until that result is known. Do not rely on email alone for SLA monitoring: the source of truth is `CaseMilestone` (see the REST API) and the Case field history of `SLA_Alert_Status__c`.
+- **Email delivery: root cause found.** Emails sent by Flow or Apex leave Salesforce with the *running user's* address in the `From` header, in the test org a free Gmail address, and without a valid DKIM signature (`DKIM = none`). Gmail rejects most of them. Excerpt of the rejection from the org's Email Log (addresses removed):
+
+  ```
+  550-5.7.30 Authentication results:
+  550-5.7.30  DKIM = did not pass
+  550-5.7.30 To set up DKIM for your sending domains, visit
+  550-5.7.30 https://support.google.com/a?p=turn-on-dkim
+  ```
+
+  The `WF_EMAIL_SENT` lines in the debug log only prove that Salesforce *accepted* the email, not that it was delivered. Emails from `noreply@salesforce.com` carry a valid DKIM and arrive. In a real company the fix is to send from a company domain with DKIM configured (Setup > DKIM Keys) and, ideally, an Organization-Wide Email Address on that domain; that is not possible with a personal mailbox in a Developer Edition.
+- **Alerts no longer depend on email.** `Incident_SLA_Alert_Email` now notifies through three channels, in this order: a **Task** for the supervisor (related to the case), a **custom notification** (bell, type `Incident_SLA_Alert`) and, last and optional, the **email** (best-effort; skipped when `Supervisor_Email__c` is empty). Each channel has its own fault path, so one failure never blocks the others, and failures are appended to `Routing_Note__c`. Task and notification contain only case number, priority, type and SLA state, no personal data.
+- **Configuration is runtime-only.** The recipient (`Supervisor_Username__c` and the optional `Supervisor_Email__c`) lives in the `Default` record of `Incident_Alert_Setting__mdt`, which is excluded in `.forceignore`; set it with `scripts/apex/set-supervisor-email.apex`.
+- **Bulk behaviour.** Moving 50 cases to Warning in one update created 50 Tasks, 0 faults, and used 3 SOQL queries and 2 DML statements in total: the supervisor lookup does not run per case.
 
 ## Notes from Section 4 (escalation batch)
 

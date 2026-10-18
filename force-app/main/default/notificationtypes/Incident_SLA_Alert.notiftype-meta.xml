@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomNotificationType xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customNotifTypeName>Incident_SLA_Alert</customNotifTypeName>
+    <description>Aviso aos 75% e violação do SLA de um incidente de TI</description>
+    <desktop>true</desktop>
+    <masterLabel>Alerta de SLA de Incidente</masterLabel>
+    <mobile>true</mobile>
+    <slack>false</slack>
+</CustomNotificationType>

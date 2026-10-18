@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Supervisor_Username__c</fullName>
+    <label>Username do Supervisor</label>
+    <description>Username do utilizador que recebe a Task e a notificação (sino) de alerta de SLA. Definido só em runtime.</description>
+    <length>80</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>
