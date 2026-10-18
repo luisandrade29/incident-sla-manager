@@ -8,5 +8,7 @@
     <objectPermissions><object>Account</object><allowCreate>false</allowCreate><allowRead>true</allowRead><allowEdit>false</allowEdit><allowDelete>false</allowDelete><viewAllRecords>false</viewAllRecords><modifyAllRecords>false</modifyAllRecords></objectPermissions>
     <fieldPermissions><field>Case.Priority</field><editable>true</editable><readable>true</readable></fieldPermissions>
     <fieldPermissions><field>Case.Type</field><editable>true</editable><readable>true</readable></fieldPermissions>
+    <fieldPermissions><field>Case.Routing_Note__c</field><editable>true</editable><readable>true</readable></fieldPermissions>
+    <fieldPermissions><field>Case.EntitlementId</field><editable>true</editable><readable>true</readable></fieldPermissions>
     <recordTypeVisibilities><recordType>Case.Incident_IT</recordType><visible>true</visible></recordTypeVisibilities>
 </PermissionSet>
