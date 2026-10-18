@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Send_Supervisor_Email</name><label>Enviar email ao supervisor</label><locationX>176</locationX><locationY>300</locationY>
+        <actionName>emailSimple</actionName><actionType>emailSimple</actionType>
+        <faultConnector><targetReference>Set_Fault_Note</targetReference></faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters><name>emailAddresses</name><value><elementReference>Get_Alert_Setting.Supervisor_Email__c</elementReference></value></inputParameters>
+        <inputParameters><name>emailSubject</name><value><elementReference>tSubject</elementReference></value></inputParameters>
+        <inputParameters><name>emailBody</name><value><elementReference>tBody</elementReference></value></inputParameters>
+    </actionCalls>
+    <apiVersion>68.0</apiVersion>
+    <assignments>
+        <name>Set_Fault_Note</name><label>Registar falha no caso</label><locationX>440</locationX><locationY>300</locationY>
+        <assignmentItems><assignToReference>$Record.Routing_Note__c</assignToReference><operator>Assign</operator><value><elementReference>fFaultNote</elementReference></value></assignmentItems>
+        <connector><targetReference>Save_Fault_Note</targetReference></connector>
+    </assignments>
+    <description>Envia email ao supervisor quando o SLA chega aos 75% ou é violado. Destinatário em Incident_Alert_Setting__mdt. Ignora casos fechados.</description>
+    <formulas><name>fFaultNote</name><dataType>String</dataType><expression>LEFT("Falha no email de SLA: " &amp; {!$Flow.FaultMessage}, 255)</expression></formulas>
+    <interviewLabel>Incident_SLA_Alert_Email {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Incidente de TI - Email de Alerta de SLA</label>
+    <processMetadataValues><name>BuilderType</name><value><stringValue>LightningFlowBuilder</stringValue></value></processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Alert_Setting</name><label>Obter configuração do alerta</label><locationX>176</locationX><locationY>180</locationY>
+        <connector><targetReference>Send_Supervisor_Email</targetReference></connector>
+        <faultConnector><targetReference>Set_Fault_Note</targetReference></faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters><field>DeveloperName</field><operator>EqualTo</operator><value><stringValue>Default</stringValue></value></filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Incident_Alert_Setting__mdt</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <name>Save_Fault_Note</name><label>Guardar nota de falha</label><locationX>440</locationX><locationY>420</locationY>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <connector><targetReference>Get_Alert_Setting</targetReference></connector>
+        <filterLogic>and</filterLogic>
+        <filters><field>SLA_Alert_Status__c</field><operator>IsChanged</operator><value><booleanValue>true</booleanValue></value></filters>
+        <filters><field>SLA_Alert_Status__c</field><operator>IsNull</operator><value><booleanValue>false</booleanValue></value></filters>
+        <filters><field>IsClosed</field><operator>EqualTo</operator><value><booleanValue>false</booleanValue></value></filters>
+        <locationX>50</locationX><locationY>0</locationY>
+        <object>Case</object><recordTriggerType>Update</recordTriggerType><triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <textTemplates><name>tBody</name><isViewedAsPlainText>true</isViewedAsPlainText><text>Incidente {!$Record.CaseNumber} - {!$Record.Subject}
+Prioridade: {!$Record.Priority}
+Estado do SLA: {!$Record.SLA_Alert_Status__c}
+Estado do caso: {!$Record.Status}</text></textTemplates>
+    <textTemplates><name>tSubject</name><isViewedAsPlainText>true</isViewedAsPlainText><text>[SLA] {!$Record.SLA_Alert_Status__c} - Incidente {!$Record.CaseNumber}</text></textTemplates>
+</Flow>

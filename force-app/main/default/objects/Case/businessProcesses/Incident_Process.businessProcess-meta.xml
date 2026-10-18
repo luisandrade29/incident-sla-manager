@@ -7,4 +7,5 @@
     <values><fullName>Working</fullName><default>false</default></values>
     <values><fullName>Escalated</fullName><default>false</default></values>
     <values><fullName>Closed</fullName><default>false</default></values>
+    <values><fullName>Resolvido</fullName><default>false</default></values>
 </BusinessProcess>

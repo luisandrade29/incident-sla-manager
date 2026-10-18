@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Supervisor_Email__c</fullName>
+    <label>Email do Supervisor</label>
+    <description>Destinatário dos alertas de SLA. Alterar em Setup > Custom Metadata Types.</description>
+    <required>true</required>
+    <type>Email</type>
+    <unique>false</unique>
+</CustomField>

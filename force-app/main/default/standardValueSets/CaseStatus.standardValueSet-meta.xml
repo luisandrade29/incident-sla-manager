@@ -25,4 +25,10 @@
         <label>Closed</label>
         <closed>true</closed>
     </standardValue>
+    <standardValue>
+        <fullName>Resolved</fullName>
+        <default>false</default>
+        <label>Resolvido</label>
+        <closed>true</closed>
+    </standardValue>
 </StandardValueSet>

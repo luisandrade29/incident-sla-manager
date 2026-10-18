@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EntitlementProcess xmlns="http://soap.sforce.com/2006/04/metadata">
+    <SObjectType>Case</SObjectType>
+    <active>true</active>
+    <businessHours>Default</businessHours>
+    <description>SÓ PARA TESTES: um Milestone de 4 minutos (aviso aos 3, violação aos 4). Não usar em produção.</description>
+    <entryStartDateField>Case.CreatedDate</entryStartDateField>
+    <exitCriteriaFilterItems><field>Case.IsClosed</field><operation>equals</operation><value>true</value></exitCriteriaFilterItems>
+    <isRecordTypeApplied>false</isRecordTypeApplied>
+    <isVersionDefault>true</isVersionDefault>
+    <milestones>
+        
+        <milestoneName>Incident_Resolution</milestoneName>
+        <minutesToComplete>4</minutesToComplete>
+        <timeTriggers>
+            <actions><name>Incident_SLA_Set_Warning</name><type>FieldUpdate</type></actions>
+            <timeLength>-1</timeLength>
+            <workflowTimeTriggerUnit>Minutes</workflowTimeTriggerUnit>
+        </timeTriggers>
+        <timeTriggers>
+            <actions><name>Incident_SLA_Set_Violated</name><type>FieldUpdate</type></actions>
+            <timeLength>0</timeLength>
+            <workflowTimeTriggerUnit>Minutes</workflowTimeTriggerUnit>
+        </timeTriggers>
+        <useCriteriaStartTime>false</useCriteriaStartTime>
+    </milestones>
+    <name>[TESTE] Incidentes TI - SLA rápido de 4 minutos</name>
+    <versionNotes>v1</versionNotes>
+    <versionNumber>1</versionNumber>
+</EntitlementProcess>
