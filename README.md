@@ -38,6 +38,34 @@ flowchart TD
     CFG[(Custom Metadata:<br/>Incident_Alert_Setting__mdt<br/>runtime only)] --> F2
 ```
 
+## Screenshots
+
+All screenshots are from the development org with fictional test data.
+
+**Queue routing and entitlement assignment** (flow `Incident_Assign_Owner`: queue by Type, then the Account's active Entitlement, with a fault path on each lookup)
+
+![Incident_Assign_Owner, part 1: decision by Type, queue lookup and owner assignment](docs/screenshots/03-flow-assign-owner-part1.png)
+![Incident_Assign_Owner, part 2: Account and Entitlement lookup, routing note](docs/screenshots/04-flow-assign-owner-part2.png)
+
+**SLA process milestones** (`Incident_SLA_Process`: Critical 60 min, High 240, Normal and Low 1440)
+
+![Entitlement Process milestones by Priority](docs/screenshots/08-entitlement-milestones.png)
+
+**Multichannel SLA alert flow** (Task, then notification, then email; each channel has its own fault path)
+
+![Incident_SLA_Alert_Email, part 1: trigger, configuration and supervisor lookups](docs/screenshots/05-flow-sla-alert-part1.png)
+![Incident_SLA_Alert_Email, part 2: Task, notification type and custom notification with fault paths](docs/screenshots/06-flow-sla-alert-part2.png)
+![Incident_SLA_Alert_Email, part 3: secondary email channel and failure note](docs/screenshots/07-flow-sla-alert-part3.png)
+
+**Result on a test case** (the automatic Tasks in the feed, and the routed queue)
+
+![Automatic Warning and Violated Tasks in the case feed](docs/screenshots/01-case-feed-sla-tasks.png)
+![Case routed to the Network queue](docs/screenshots/02-case-details-routing.png)
+
+**In-app bell notifications for Warning and Violated** (the third entry is an earlier test case)
+
+![Bell notifications for the Warning and Violated alerts](docs/screenshots/09-bell-notifications.png)
+
 ## Components
 
 | Area | Component | What it does |
