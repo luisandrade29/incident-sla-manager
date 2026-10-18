@@ -4,6 +4,7 @@
     <label>Estado do Alerta SLA</label>
     <description>Preenchido pelas ações do Milestone (aviso aos 75% e violação); dispara o email ao supervisor</description>
     <required>false</required>
+    <trackHistory>true</trackHistory>
     <type>Picklist</type>
     <valueSet>
         <restricted>true</restricted>
