@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RecordType xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Incident_IT</fullName>
+    <active>true</active>
+    <label>Incidente de TI</label>
+    <description>Incidentes de TI geridos com SLA e atribuição automática</description>
+    <businessProcess>Incident_Process</businessProcess>
+    <picklistValues>
+        <picklist>Priority</picklist>
+        <values><fullName>Critical</fullName><default>false</default></values>
+        <values><fullName>High</fullName><default>false</default></values>
+        <values><fullName>Normal</fullName><default>true</default></values>
+        <values><fullName>Low</fullName><default>false</default></values>
+    </picklistValues>
+    <picklistValues>
+        <picklist>Type</picklist>
+        <values><fullName>Infrastructure</fullName><default>false</default></values>
+        <values><fullName>Network</fullName><default>false</default></values>
+        <values><fullName>Security</fullName><default>false</default></values>
+    </picklistValues>
+</RecordType>
