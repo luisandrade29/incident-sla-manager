@@ -11,5 +11,6 @@
     <fieldPermissions><field>Case.Routing_Note__c</field><editable>true</editable><readable>true</readable></fieldPermissions>
     <fieldPermissions><field>Case.EntitlementId</field><editable>true</editable><readable>true</readable></fieldPermissions>
     <fieldPermissions><field>Case.SLA_Alert_Status__c</field><editable>true</editable><readable>true</readable></fieldPermissions>
+    <fieldPermissions><field>Case.AccountId</field><editable>true</editable><readable>true</readable></fieldPermissions>
     <recordTypeVisibilities><recordType>Case.Incident_IT</recordType><visible>true</visible></recordTypeVisibilities>
 </PermissionSet>
