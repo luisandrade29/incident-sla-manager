@@ -2,10 +2,10 @@
 <Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
     <fieldUpdates>
         <fullName>Incident_SLA_Set_Warning</fullName>
-        <description>Aviso aos 75% do prazo do Milestone</description>
+        <description>Warning at 75% of the Milestone deadline</description>
         <field>SLA_Alert_Status__c</field>
         <literalValue>Warning</literalValue>
-        <name>Incidente SLA: marcar Aviso</name>
+        <name>Incident SLA: set Warning</name>
         <notifyAssignee>false</notifyAssignee>
         <operation>Literal</operation>
         <protected>false</protected>
@@ -13,10 +13,10 @@
     </fieldUpdates>
     <fieldUpdates>
         <fullName>Incident_SLA_Set_Violated</fullName>
-        <description>Violação do prazo do Milestone</description>
+        <description>Milestone deadline violated</description>
         <field>SLA_Alert_Status__c</field>
         <literalValue>Violated</literalValue>
-        <name>Incidente SLA: marcar Violado</name>
+        <name>Incident SLA: set Violated</name>
         <notifyAssignee>false</notifyAssignee>
         <operation>Literal</operation>
         <protected>false</protected>

@@ -2,8 +2,8 @@
 <RecordType xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Incident_IT</fullName>
     <active>true</active>
-    <label>Incidente de TI</label>
-    <description>Incidentes de TI geridos com SLA e atribuição automática</description>
+    <label>IT Incident</label>
+    <description>IT incidents managed with SLA and automatic assignment</description>
     <businessProcess>Incident_Process</businessProcess>
     <picklistValues>
         <picklist>Priority</picklist>

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>SLA_Alert_Status__c</fullName>
-    <label>Estado do Alerta SLA</label>
-    <description>Preenchido pelas ações do Milestone (aviso aos 75% e violação); dispara o email ao supervisor</description>
+    <label>SLA Alert Status</label>
+    <description>Set by the Milestone actions (75% warning and violation); triggers the supervisor alert</description>
     <required>false</required>
     <trackHistory>true</trackHistory>
     <type>Picklist</type>
@@ -10,8 +10,8 @@
         <restricted>true</restricted>
         <valueSetDefinition>
             <sorted>false</sorted>
-            <value><fullName>Warning</fullName><default>false</default><label>Aviso (75%)</label></value>
-            <value><fullName>Violated</fullName><default>false</default><label>Violado</label></value>
+            <value><fullName>Warning</fullName><default>false</default><label>Warning (75%)</label></value>
+            <value><fullName>Violated</fullName><default>false</default><label>Violated</label></value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>

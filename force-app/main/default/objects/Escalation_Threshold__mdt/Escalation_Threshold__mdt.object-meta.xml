@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
-    <label>Limite de Escalonamento</label>
-    <pluralLabel>Limites de Escalonamento</pluralLabel>
-    <description>Máximo de incidentes Critical e High abertos por fila antes de o batch subir prioridades. O DeveloperName do registo é o da fila (ex.: Network_Queue); Default aplica-se às restantes.</description>
+    <label>Escalation Threshold</label>
+    <pluralLabel>Escalation Thresholds</pluralLabel>
+    <description>Maximum open Critical and High incidents per queue before the batch raises priorities. The record DeveloperName is the queue's (for example Network_Queue); Default applies to the rest.</description>
     <visibility>Public</visibility>
 </CustomObject>

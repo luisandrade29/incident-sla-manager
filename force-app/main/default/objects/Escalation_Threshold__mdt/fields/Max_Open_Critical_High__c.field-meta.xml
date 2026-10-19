@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Max_Open_Critical_High__c</fullName>
-    <label>Máximo de Critical e High abertos</label>
+    <label>Max Open Critical and High</label>
     <precision>5</precision>
     <scale>0</scale>
     <required>true</required>

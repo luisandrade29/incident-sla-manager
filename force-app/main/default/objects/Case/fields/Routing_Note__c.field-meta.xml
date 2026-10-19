@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Routing_Note__c</fullName>
-    <label>Nota de Encaminhamento</label>
-    <description>Regista decisões e falhas do flow de atribuição de incidentes</description>
+    <label>Routing Note</label>
+    <description>Records the decisions and failures of the incident assignment flow</description>
     <length>255</length>
     <type>Text</type>
     <required>false</required>

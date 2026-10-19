@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Last_Escalated_At__c</fullName>
-    <label>Última Subida de Prioridade</label>
-    <description>Preenchido pelo batch de escalonamento. Se tiver valor, o caso nunca volta a ser escalado automaticamente.</description>
+    <label>Last Priority Escalation</label>
+    <description>Set by the escalation batch. If it has a value, the case is never escalated automatically again.</description>
     <required>false</required>
     <type>DateTime</type>
 </CustomField>
