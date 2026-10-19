@@ -13,5 +13,5 @@ package.xml
 
 node_modules/
 
-# Registo com o email do supervisor: configurado só em runtime (scripts/apex/set-supervisor-email.apex), nunca no repositório
+# Supervisor settings record: configured at runtime only (scripts/apex/set-supervisor-email.apex), never in the repository
 **/customMetadata/Incident_Alert_Setting.*

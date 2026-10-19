@@ -1,7 +1,7 @@
-// Dados de teste fictícios. Idempotente: não duplica se já existirem.
+// Fictional test data. Idempotent.
 // Executar: sf apex run -f scripts/apex/seed-data.apex -o <org>
-String accName = 'Conta Teste Incidentes';
-String entName = 'Suporte Incidentes TI';
+String accName = 'Incident Test Account';
+String entName = 'IT Incident Support';
 
 List<Account> accs = [SELECT Id FROM Account WHERE Name = :accName LIMIT 1];
 if (accs.isEmpty()) {
@@ -13,9 +13,9 @@ List<Entitlement> ents = [SELECT Id FROM Entitlement WHERE Name = :entName AND A
 if (ents.isEmpty()) {
     insert new Entitlement(Name = entName, AccountId = accs[0].Id, StartDate = Date.today().addDays(-1));
 }
-System.debug('Seed concluído: ' + accName + ' / ' + entName);
+System.debug('Seed done: ' + accName + ' / ' + entName);
 
-// O utilizador que executa o script passa a ser membro das 3 filas (idempotente).
+// The running user becomes a member of the 3 queues (idempotent).
 Id me = UserInfo.getUserId();
 Set<Id> already = new Set<Id>();
 for (GroupMember gm : [SELECT GroupId FROM GroupMember WHERE UserOrGroupId = :me]) {

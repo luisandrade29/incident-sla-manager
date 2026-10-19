@@ -1,3 +1,3 @@
-// Agenda o batch de escalonamento de hora a hora. Para outra frequência, passar outra expressão cron.
+// Schedules the escalation batch hourly; pass another cron expression for a different frequency.
 // Executar: sf apex run -f scripts/apex/schedule-escalation.apex -o <org>
-System.debug('Job agendado: ' + IncidentPriorityEscalationScheduler.schedule(IncidentPriorityEscalationScheduler.CRON_HOURLY));
+System.debug('Job scheduled: ' + IncidentPriorityEscalationScheduler.schedule(IncidentPriorityEscalationScheduler.CRON_HOURLY));

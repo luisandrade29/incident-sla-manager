@@ -51,6 +51,6 @@ $RECYCLE.BIN/
 .claude/
 graphy-out/
 
-# Dumps locais de logs e dados de teste
+# Local log dumps and test data
 EmailLog*.csv
 *.local.apex

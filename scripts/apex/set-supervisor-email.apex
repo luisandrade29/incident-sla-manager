@@ -1,8 +1,8 @@
-// Define o supervisor dos alertas de SLA (Task, notificação e email) (registo Default de Incident_Alert_Setting__mdt) diretamente na org.
-// Editar o valor localmente antes de executar e NÃO fazer commit do email real.
+// Sets the SLA alert supervisor (Default record of Incident_Alert_Setting__mdt) directly in the org.
+// Edit the values locally before running and NEVER commit a real address.
 // Executar: sf apex run -f scripts/apex/set-supervisor-email.apex -o <org>
-String supervisorEmail = 'supervisor@example.invalid';    // opcional: vazio desativa o email (canal secundário)
-String supervisorUsername = 'supervisor@example.invalid'; // username do utilizador que recebe a Task e a notificação
+String supervisorEmail = 'supervisor@example.invalid';    // optional: empty disables the email (secondary channel)
+String supervisorUsername = 'supervisor@example.invalid'; // username of the user who receives the Task and bell notification
 
 Metadata.CustomMetadata record = new Metadata.CustomMetadata();
 record.fullName = 'Incident_Alert_Setting.Default';
@@ -18,4 +18,4 @@ record.values.add(userValue);
 
 Metadata.DeployContainer container = new Metadata.DeployContainer();
 container.addMetadata(record);
-System.debug('Deploy do Custom Metadata: ' + Metadata.Operations.enqueueDeployment(container, null));
+System.debug('Custom Metadata deploy: ' + Metadata.Operations.enqueueDeployment(container, null));
