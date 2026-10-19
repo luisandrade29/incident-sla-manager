@@ -1,4 +1,4 @@
-/** Executa o IncidentPriorityEscalationBatch periodicamente (por defeito, de hora a hora). */
+/** Runs IncidentPriorityEscalationBatch on a schedule (hourly by default). */
 public with sharing class IncidentPriorityEscalationScheduler implements Schedulable {
 
     public static final String JOB_NAME = 'Incident Priority Escalation (hourly)';

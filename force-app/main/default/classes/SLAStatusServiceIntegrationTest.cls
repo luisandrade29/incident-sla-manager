@@ -1,7 +1,6 @@
 /**
- * Teste de integração do endpoint com Milestones reais.
- * DEPENDE dos metadados: processo Incident_SLA_Test_Process (Milestone de 4 minutos), o Permission Set Incident_Manager
- * e o flow Incident_Assign_Owner. Não corre numa org onde isso não esteja deployado.
+ * Integration test with real Milestones. DEPENDS on the deployed Incident_SLA_Test_Process (4-minute Milestone),
+ * the Incident_Manager permission set and the Incident_Assign_Owner flow.
  */
 @IsTest
 private class SLAStatusServiceIntegrationTest {
@@ -9,10 +8,10 @@ private class SLAStatusServiceIntegrationTest {
     @TestSetup
     static void setup() {
         IncidentTestUtil.createManager();
-        Account acc = new Account(Name = 'Conta Teste Integração SLA');
+        Account acc = new Account(Name = 'SLA Integration Test Account');
         insert acc;
         SlaProcess proc = [SELECT Id FROM SlaProcess WHERE Name = 'Incident_SLA_Test_Process' AND IsActive = true LIMIT 1];
-        insert new Entitlement(Name = 'Entitlement Teste SLA', AccountId = acc.Id, SlaProcessId = proc.Id, StartDate = Date.today().addDays(-1));
+        insert new Entitlement(Name = 'SLA Test Entitlement', AccountId = acc.Id, SlaProcessId = proc.Id, StartDate = Date.today().addDays(-1));
 
         Account a = [SELECT Id FROM Account LIMIT 1];
         Entitlement e = [SELECT Id FROM Entitlement LIMIT 1];

@@ -4,10 +4,10 @@ private class IncidentMilestoneCompleterTest {
     @TestSetup
     static void setup() {
         IncidentTestUtil.createManager();
-        Account acc = new Account(Name = 'Conta Teste Milestones');
+        Account acc = new Account(Name = 'Milestones Test Account');
         insert acc;
         SlaProcess proc = [SELECT Id FROM SlaProcess WHERE Name = 'Incident_SLA_Test_Process' AND IsActive = true LIMIT 1];
-        insert new Entitlement(Name = 'Entitlement Teste', AccountId = acc.Id, SlaProcessId = proc.Id, StartDate = Date.today().addDays(-1));
+        insert new Entitlement(Name = 'Test Entitlement', AccountId = acc.Id, SlaProcessId = proc.Id, StartDate = Date.today().addDays(-1));
     }
 
     private static List<Case> newCases(Integer n) {
@@ -26,12 +26,11 @@ private class IncidentMilestoneCompleterTest {
         System.runAs(IncidentTestUtil.getManager()) {
             insert cases;
         }
-        System.assertEquals(200, [SELECT COUNT() FROM CaseMilestone WHERE IsCompleted = false], 'Cada caso deve ter um Milestone aberto');
+        System.assertEquals(200, [SELECT COUNT() FROM CaseMilestone WHERE IsCompleted = false], 'Each case must have an open Milestone');
 
         for (Case c : cases) {
             c.Status = 'Closed';
         }
-        // Casos sem Subject: o trigger do Case Classifier ignora-os e não enfileira jobs encadeados (ver README).
         User manager = IncidentTestUtil.getManager();
         Integer queriesBefore = Limits.getQueries();
         System.runAs(manager) {
@@ -39,8 +38,8 @@ private class IncidentMilestoneCompleterTest {
         }
         Integer queries = Limits.getQueries() - queriesBefore;
 
-        System.assertEquals(0, [SELECT COUNT() FROM CaseMilestone WHERE IsCompleted = false], 'Todos os Milestones devem ficar concluídos');
-        System.assert(queries < 20, 'Deve estar bulkificado, SOQL usadas: ' + queries);
+        System.assertEquals(0, [SELECT COUNT() FROM CaseMilestone WHERE IsCompleted = false], 'All Milestones must be completed');
+        System.assert(queries < 20, 'Must be bulkified, SOQL used: ' + queries);
     }
 
     @IsTest

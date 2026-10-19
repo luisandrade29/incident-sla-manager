@@ -1,10 +1,9 @@
-/** Testes de SLAStatusService sem depender do Entitlement Process: classificação com objetos em memória. */
+/** Tests SLAStatusService without the Entitlement Process: classification with in-memory rows. */
 @IsTest
 private class SLAStatusServiceTest {
 
     private static final Datetime T0 = Datetime.newInstance(2026, 10, 18, 12, 0, 0);
 
-    // Milestone de 100 minutos a começar em T0.
     private static SLAStatusService.MilestoneRow row(Id caseId, String type, Boolean violated) {
         return new SLAStatusService.MilestoneRow(caseId, type, T0, T0.addMinutes(100), violated);
     }
@@ -27,9 +26,9 @@ private class SLAStatusServiceTest {
         SLAStatusService.MilestoneRow r = row(fakeCaseId(1), 'Network', false);
         System.assertEquals(SLAStatusService.WITHIN, SLAStatusService.classify(r, T0));
         System.assertEquals(SLAStatusService.WITHIN, SLAStatusService.classify(r, T0.addMinutes(74)));
-        System.assertEquals(SLAStatusService.NEAR, SLAStatusService.classify(r, T0.addMinutes(75)), '75% exatos já é perto de violar');
-        System.assertEquals(SLAStatusService.NEAR, SLAStatusService.classify(r, T0.addMinutes(100)), 'No prazo exato ainda não passou');
-        System.assertEquals(SLAStatusService.BREACHED, SLAStatusService.classify(r, T0.addMinutes(101)), 'Passou o prazo, mesmo com IsViolated=false');
+        System.assertEquals(SLAStatusService.NEAR, SLAStatusService.classify(r, T0.addMinutes(75)), 'Exactly 75% already counts as near breach');
+        System.assertEquals(SLAStatusService.NEAR, SLAStatusService.classify(r, T0.addMinutes(100)), 'At the exact deadline it has not passed yet');
+        System.assertEquals(SLAStatusService.BREACHED, SLAStatusService.classify(r, T0.addMinutes(101)), 'Past the deadline, even with IsViolated=false');
     }
 
     @IsTest
@@ -40,7 +39,7 @@ private class SLAStatusServiceTest {
     @IsTest
     static void handlesDegenerateDates() {
         Id c = fakeCaseId(1);
-        System.assertEquals(SLAStatusService.WITHIN, SLAStatusService.classify(new SLAStatusService.MilestoneRow(c, 'Network', T0, T0, false), T0), 'Duração zero');
+        System.assertEquals(SLAStatusService.WITHIN, SLAStatusService.classify(new SLAStatusService.MilestoneRow(c, 'Network', T0, T0, false), T0), 'Zero duration');
         System.assertEquals(SLAStatusService.WITHIN, SLAStatusService.classify(new SLAStatusService.MilestoneRow(c, 'Network', null, T0.addMinutes(5), false), T0));
         System.assertEquals(SLAStatusService.WITHIN, SLAStatusService.classify(new SLAStatusService.MilestoneRow(c, 'Network', T0, null, false), T0));
     }
@@ -77,7 +76,7 @@ private class SLAStatusServiceTest {
         };
         SLAStatusService.Report r = SLAStatusService.buildReport(rows, null, T0.addMinutes(10), false);
         SLAStatusService.TypeSummary s = summary(r, 'Network');
-        System.assertEquals(1, s.total_open, 'Casos distintos, não Milestones');
+        System.assertEquals(1, s.total_open, 'Distinct cases, not Milestones');
         System.assertEquals(1, s.breached);
         System.assertEquals(0, s.within_sla);
     }
@@ -87,7 +86,7 @@ private class SLAStatusServiceTest {
         Map<String, Integer> noSla = new Map<String, Integer>{ 'Network' => 4 };
         SLAStatusService.Report r = SLAStatusService.buildReport(new List<SLAStatusService.MilestoneRow>{ row(fakeCaseId(1), 'Network', false) }, noSla, T0, false);
         System.assertEquals(4, summary(r, 'Network').no_sla);
-        System.assertEquals(1, summary(r, 'Network').total_open, 'no_sla não entra no total_open');
+        System.assertEquals(1, summary(r, 'Network').total_open, 'no_sla is not part of total_open');
         System.assertEquals(0, summary(r, 'Security').no_sla);
     }
 
@@ -96,7 +95,7 @@ private class SLAStatusServiceTest {
         List<SLAStatusService.MilestoneRow> rows = new List<SLAStatusService.MilestoneRow>();
         List<String> types = new List<String>{ 'Infrastructure', 'Network', 'Security', null };
         for (Integer i = 0; i < 200; i++) {
-            // 100 dentro do prazo (violated=false, now=T0), 100 já violados
+            // First 100 within SLA, last 100 already violated.
             rows.add(row(fakeCaseId(i), types[Math.mod(i, 4)], i >= 100));
         }
         SLAStatusService.Report r = SLAStatusService.buildReport(rows, null, T0, false);
@@ -112,10 +111,8 @@ private class SLAStatusServiceTest {
         System.assertEquals(200, total);
         System.assertEquals(100, breached);
         System.assertEquals(100, within);
-        System.assertEquals(100, summary(r, 'Infrastructure').total_open, 'Infrastructure + os de Type vazio');
+        System.assertEquals(100, summary(r, 'Infrastructure').total_open, 'Infrastructure plus those with an empty Type');
     }
-
-    // ---- Handler REST ----
 
     private static void prepareRequest() {
         RestRequest req = new RestRequest();
@@ -146,14 +143,14 @@ private class SLAStatusServiceTest {
         System.assertEquals('Network', network.get('type'));
         System.assertEquals(2, network.get('no_sla'));
         System.assertEquals(0, network.get('total_open'));
-        System.assert(!body.contains('Subject') && !body.contains('@'), 'A resposta não pode ter dados pessoais');
+        System.assert(!body.contains('Subject') && !body.contains('@'), 'The response must not contain personal data');
     }
 
     @IsTest
     static void restReturns403WhenUserCannotReadCases() {
         List<Profile> minimal = [SELECT Id FROM Profile WHERE Name = 'Minimum Access - Salesforce' LIMIT 1];
         if (minimal.isEmpty()) {
-            return; // perfil standard em falta nesta org
+            return; // Standard profile missing in this org.
         }
         User u;
         System.runAs(new User(Id = UserInfo.getUserId())) {
@@ -174,11 +171,11 @@ private class SLAStatusServiceTest {
     @IsTest
     static void restReturns500WithGenericJsonOnUnexpectedError() {
         prepareRequest();
-        SLAStatusService.failureForTest = new CalloutException('detalhe interno que não deve sair');
+        SLAStatusService.failureForTest = new CalloutException('internal detail that must not leak');
         SLAStatusService.getStatus();
         System.assertEquals(500, RestContext.response.statusCode);
         String body = RestContext.response.responseBody.toString();
         System.assert(body.contains('INTERNAL_ERROR'));
-        System.assert(!body.contains('detalhe interno'), 'Não expor a mensagem da exceção');
+        System.assert(!body.contains('internal detail'), 'Do not expose the exception message');
     }
 }

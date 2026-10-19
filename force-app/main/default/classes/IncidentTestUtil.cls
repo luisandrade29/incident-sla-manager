@@ -1,14 +1,13 @@
 /**
- * Utilitário de testes: cria um utilizador com o Permission Set Incident_Manager.
- * Necessário porque o Record Type "Incidente de TI" e o campo EntitlementId só ficam acessíveis com esse Permission Set,
- * e quem o tem passa a ter esse Record Type como predefinido.
+ * Creates a test user with Incident_Manager: the Incident_IT Record Type and EntitlementId are only accessible
+ * with that permission set, and its holders get that Record Type as their default.
  */
 @IsTest
 public class IncidentTestUtil {
 
     public static final String MANAGER_LAST_NAME = 'IncidentMgrTest';
 
-    // Chamar a partir de @TestSetup (usa runAs para evitar MIXED_DML_OPERATION).
+    // Call from @TestSetup (runAs avoids MIXED_DML_OPERATION).
     public static void createManager() {
         System.runAs(new User(Id = UserInfo.getUserId())) {
             User u = new User(

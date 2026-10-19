@@ -1,13 +1,8 @@
 /**
- * Escalonamento de prioridade por sobrecarga de fila.
- *
- * Por fila, conta os incidentes abertos de prioridade Critical e High. Se ultrapassar o limite
- * (Escalation_Threshold__mdt, por fila ou Default), sobe de High para Critical os casos mais antigos,
- * até ao máximo do excesso. Cada caso só é escalado uma vez (Last_Escalated_At__c) para não haver
- * escalonamento em cadeia, e cada subida fica registada num CaseComment interno.
- *
- * A seleção é feita em start() com uma única query (sem SOQL em loops); execute() só atualiza os casos escolhidos.
- * shortcut: o plano lê até 50 000 incidentes abertos Critical/High em start(); acima disso, mudar para agregação por fila.
+ * Raises the oldest High incidents to Critical when a queue has more open Critical + High incidents than its limit
+ * (Escalation_Threshold__mdt). Each case is escalated at most once, and the reason goes in an internal CaseComment.
+ * The plan is built in start() with one query; execute() only updates the chosen cases.
+ * shortcut: reads up to 50,000 open incidents in start(); above that, aggregate per queue.
  */
 public with sharing class IncidentPriorityEscalationBatch implements Database.Batchable<SObject>, Database.Stateful {
 
@@ -15,10 +10,10 @@ public with sharing class IncidentPriorityEscalationBatch implements Database.Ba
     private static final String DEFAULT_KEY = 'Default';
     private static final String QUEUE_PREFIX = '00G';
 
-    // Só para testes: limites por DeveloperName da fila (e 'Default'), em vez do Custom Metadata.
+    // Test-only: limits by queue DeveloperName (and 'Default') instead of the Custom Metadata.
     @TestVisible private static Map<String, Integer> thresholdOverride;
 
-    // Motivo por caso, calculado em start() e usado em execute() (Stateful).
+    // Reason per case, built in start() and used in execute() (Stateful).
     private Map<Id, String> reasons = new Map<Id, String>();
     private Integer escalated = 0;
     private Integer failed = 0;
@@ -38,7 +33,7 @@ public with sharing class IncidentPriorityEscalationBatch implements Database.Ba
         Datetime now = Datetime.now();
         List<Case> toUpdate = new List<Case>();
         for (Case c : scope) {
-            // Revalida: o caso pode ter mudado entre start() e execute().
+            // Re-check: the case may have changed between start() and execute().
             if (c.Priority == 'High' && c.Last_Escalated_At__c == null) {
                 c.Priority = 'Critical';
                 c.Last_Escalated_At__c = now;
@@ -67,10 +62,10 @@ public with sharing class IncidentPriorityEscalationBatch implements Database.Ba
     }
 
     public void finish(Database.BatchableContext bc) {
-        System.debug('IncidentPriorityEscalationBatch: escalados=' + escalated + ', falhas=' + failed);
+        System.debug('IncidentPriorityEscalationBatch: escalated=' + escalated + ', failed=' + failed);
     }
 
-    /** Devolve os Ids a escalar e preenche os motivos. */
+    /** Returns the Ids to escalate and fills the reasons. */
     private Set<Id> planEscalation() {
         List<Case> open = [
             SELECT Id, OwnerId, Priority, Last_Escalated_At__c
@@ -118,7 +113,6 @@ public with sharing class IncidentPriorityEscalationBatch implements Database.Ba
                 if (picked >= excess) {
                     break;
                 }
-                // Só High -> Critical, e só se nunca foi escalado.
                 if (c.Priority == 'High' && c.Last_Escalated_At__c == null) {
                     selected.add(c.Id);
                     reasons.put(c.Id, buildReason(q.Name, cases.size(), limitForQueue, excess));
@@ -141,9 +135,9 @@ public with sharing class IncidentPriorityEscalationBatch implements Database.Ba
     }
 
     private static String buildReason(String queueName, Integer open, Integer maxAllowed, Integer excess) {
-        return 'Prioridade subida de High para Critical pelo escalonamento automático: a fila "' + queueName + '" tinha '
-            + open + ' incidentes Critical/High abertos (limite ' + maxAllowed + ', excesso ' + excess + '); este está entre os mais antigos. '
-            + 'Atenção: mudar a Priority recalcula o prazo do Milestone em curso (de 4 h para 1 h, contado desde o início do SLA); '
-            + 'um incidente com mais de 1 h pode ficar logo com o Milestone violado.';
+        return 'Priority raised from High to Critical by the automatic escalation: queue "' + queueName + '" had '
+            + open + ' open Critical/High incidents (limit ' + maxAllowed + ', excess ' + excess + '); this one is among the oldest. '
+            + 'Note: changing the Priority recalculates the running Milestone deadline (from 4 h to 1 h, counted from the SLA start); '
+            + 'an incident older than 1 h may immediately have its Milestone violated.';
     }
 }

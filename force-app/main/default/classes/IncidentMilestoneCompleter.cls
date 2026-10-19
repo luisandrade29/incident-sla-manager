@@ -1,8 +1,6 @@
 /**
- * Conclui os Milestones abertos quando um caso passa a fechado (Resolved ou Closed),
- * para que deixem de gerar avisos ou violações.
- * Porquê Apex e não Flow: a atualização de CaseMilestone fica numa única query e num único DML
- * para qualquer volume de casos, sem loops nem um DML por caso.
+ * Completes open Milestones when a case is closed so they stop warning or violating.
+ * One query and one DML for any number of cases; a Flow would update them per case.
  */
 public with sharing class IncidentMilestoneCompleter {
 
