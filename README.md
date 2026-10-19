@@ -18,7 +18,7 @@ An IT service desk receives incidents that must reach the right team (Infrastruc
 
 ```mermaid
 flowchart TD
-    U[User or integration creates a Case<br/>Record Type: Incidente de TI] --> F1[Flow: Incident_Assign_Owner<br/>before-save]
+    U[User or integration creates a Case<br/>Record Type: IT Incident] --> F1[Flow: Incident_Assign_Owner<br/>before-save]
     F1 -->|Type -> queue| Q[(Queues: Infrastructure, Network, Security)]
     F1 -->|active Entitlement of the Account| EP[Entitlement Process: Incident_SLA_Process<br/>Milestone by Priority: Critical 1h, High 4h, Normal/Low 24h]
     EP -->|75% of the deadline| WU1[Workflow field update:<br/>SLA_Alert_Status__c = Warning]
@@ -70,7 +70,7 @@ All screenshots are from the development org with fictional test data.
 
 | Area | Component | What it does |
 |---|---|---|
-| Data model | Record Type `Incident_IT` ("Incidente de TI"), Support Process `Incident_Process` | Isolates incidents from other Cases; adds the `Resolved` status |
+| Data model | Record Type `Incident_IT` ("IT Incident"), Support Process `Incident_Process` | Isolates incidents from other Cases; adds the `Resolved` status |
 | | `Priority` (Critical, High, Normal, Low), `Type` (Infrastructure, Network, Security) | Standard picklists extended; the Record Type only shows the new values |
 | | `Routing_Note__c`, `SLA_Alert_Status__c` (history tracked), `Last_Escalated_At__c` | Audit of routing decisions and failures; SLA alert state; escalation marker |
 | | Queues `Infrastructure_Queue`, `Network_Queue`, `Security_Queue` | One per team |
@@ -99,6 +99,15 @@ All screenshots are from the development org with fictional test data.
 - **Configuration lives in Custom Metadata**, not in code: the escalation limit per queue and the alert recipient.
 - **The API groups by `Case.Type`, not by owner.** A case's owner changes from the queue to a person when a technician picks it up, so owner-based counts would move cases out of the queue figures. Type is stable.
 
+## Language of labels and descriptions
+
+Code, comments, Flow and metadata labels, descriptions and user-facing texts (Task, notification, notes) are in English, so the project reads consistently. Two things are intentionally left as they are:
+
+- The labels of **standard value sets** shared org-wide (Priority `Critical` = "Crítico", Type labels "Infraestrutura", "Redes" and "Segurança", Status `Resolved` = "Resolvido"). Changing them would relabel every Case in the org, including the Case Classifier project, and the support process references the status by its label.
+- The name and description of the two **Entitlement Processes**, because a process in use cannot be redeployed (see Known issues).
+
+API names (DeveloperNames) never change.
+
 ## Install and configure
 
 Requirements: Salesforce CLI, a Developer Edition (or sandbox) with **Entitlement Management enabled** (Setup > Entitlement Settings) and an authenticated org alias (`<ORG_ALIAS>`).
@@ -106,7 +115,7 @@ Requirements: Salesforce CLI, a Developer Edition (or sandbox) with **Entitlemen
 > The order below is the one used while building in a Developer Edition. A full install into a brand-new org has not been run end to end.
 
 ```bash
-# 1. Status values first: the support process references "Resolvido"
+# 1. Status values first: the support process references the status label "Resolvido"
 sf project deploy start -o <ORG_ALIAS> -d force-app/main/default/standardValueSets
 
 # 2. Everything else, running the Apex tests
@@ -155,7 +164,7 @@ Last run in the development org: **35 tests (including the Case Classifier's), a
 Manual checks:
 
 - **Routing**: with the permission set assigned, `sf apex run -f scripts/apex/test-assign-flow.apex -o <ORG_ALIAS>` creates 4 cases (one per type, one without Type) and 200 in bulk and prints owner and entitlement of each. It leaves test data in the org.
-- **SLA in minutes instead of hours**: create an Account Entitlement linked to `Incident_SLA_Test_Process` (done by step 4) and open a case on the "Conta Teste SLA Rápido" account. The Milestone lasts 4 minutes: the Warning action runs at about 3 minutes and Violated at 4, both at the next `:59` second of the minute (the SLA engine ticks once a minute), creating the Task and the notification and attempting the email.
+- **SLA in minutes instead of hours**: create an Account Entitlement linked to `Incident_SLA_Test_Process` (done by step 4) and open a case on the "Fast SLA Test Account" account. The Milestone lasts 4 minutes: the Warning action runs at about 3 minutes and Violated at 4, both at the next `:59` second of the minute (the SLA engine ticks once a minute), creating the Task and the notification and attempting the email.
 
 ## REST API
 
@@ -203,6 +212,10 @@ Example response (fictional data):
 - **An Entitlement Process in use cannot be redeployed.** Once an Entitlement points to a process, deploying it again fails with `Cannot update SLA process that is in use`. To change durations, create a new process version. After the first deploy, deploy Apex, triggers and flows without the `entitlementProcesses` folder. The process is also only active with `<active>true</active>`; `SlaProcess.IsActive` cannot be updated through the API.
 - **Interaction with the Case Classifier (separate project).** Its `CaseAiClassifier` trigger enqueues a chained Queueable for every new Case with a Subject or Description. For IT incidents that meant unwanted AI callouts and, in Apex tests, `Maximum stack depth has been reached`. It now skips the `Incident_IT` Record Type (a separate commit in that repository, resolved through `Schema`, no SOQL). The escalation tests insert cases *with* a Subject and Description and assert that no `CaseClassifierQueueable` job is created.
 - **Priority escalation changes the running Milestone deadline.** Verified in the org: changing a case from High to Critical on the real SLA process recalculated the *same* Milestone from 4 h to 1 h, counted from the original start (target 20:13:40 became 17:13:40 for a case started at 16:13:40). An escalated incident older than 1 h can therefore be violated immediately (inferred from the recalculated target; not tested with an aged case). The escalation comment says so.
-- **The permission set changes the user's default Record Type.** Assigning `Incident_Manager` makes "Incidente de TI" that user's default Case Record Type, so plain cases that user creates (for example in the Case Classifier demo) become incidents. Assign it only to people who work with incidents.
+- **The permission set changes the user's default Record Type.** Assigning `Incident_Manager` makes "IT Incident" that user's default Case Record Type, so plain cases that user creates (for example in the Case Classifier demo) become incidents. Assign it only to people who work with incidents.
 - **DML enforces field-level security.** In this org even plain DML failed with "fields inaccessible" for fields the running user could not see, so everything that touches `Case` (including Apex tests) needs the permission set.
 - **Batch plan size.** The escalation plan reads up to 50 000 open Critical and High incidents in `start()`; beyond that, replace it with an aggregate per queue.
+
+---
+
+Built with Claude Code as a pair-programming tool; design decisions, testing and review by me.
