@@ -148,7 +148,6 @@ private class IncidentPriorityEscalationBatchTest {
 
     @IsTest
     static void usesCustomMetadataDefaultWhenNoOverride() {
-        // No override: reads the Default Escalation_Threshold__mdt record (10).
         Integer limitInMetadata = Integer.valueOf(Escalation_Threshold__mdt.getInstance('Default').Max_Open_Critical_High__c);
         insertCases(limitInMetadata + 2, 'Network', 'High');
 

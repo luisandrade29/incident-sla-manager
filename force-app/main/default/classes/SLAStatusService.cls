@@ -1,10 +1,6 @@
 /**
- * GET /services/apexrest/incidents/v1/sla-status
- *
  * SLA counts for open IT incidents, grouped by Case.Type (not by owner: the owner changes from the queue to a person
  * when a technician picks a case up). Counts only, no personal data.
- *  - total_open: open cases WITH at least one open Milestone (within_sla + near_breach + breached).
- *  - no_sla:     open cases with no open Milestone (not part of total_open).
  * Assumptions: the 75% uses wall-clock time (valid because the Business Hours are 24x7); with several open Milestones
  * on a case, the worst state counts.
  */
@@ -117,7 +113,6 @@ global with sharing class SLAStatusService {
         return (caseType == 'Network' || caseType == 'Security') ? caseType : 'Infrastructure';
     }
 
-    /** State of an open Milestone, in wall-clock time (24x7 Business Hours). */
     @TestVisible
     static Integer classify(MilestoneRow row, Datetime now) {
         if (row.isViolated == true || (row.targetDate != null && now > row.targetDate)) {
@@ -134,7 +129,6 @@ global with sharing class SLAStatusService {
         return elapsedRatio >= NEAR_BREACH_RATIO ? NEAR : WITHIN;
     }
 
-    /** Aggregates in memory: worst state per case, distinct cases per Type. */
     @TestVisible
     static Report buildReport(List<MilestoneRow> rows, Map<String, Integer> noSlaByType, Datetime now, Boolean truncated) {
         Map<Id, Integer> worstByCase = new Map<Id, Integer>();

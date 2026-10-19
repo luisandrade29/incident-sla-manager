@@ -1,5 +1,4 @@
 // Fictional test data. Idempotent.
-// Executar: sf apex run -f scripts/apex/seed-data.apex -o <org>
 String accName = 'Incident Test Account';
 String entName = 'IT Incident Support';
 

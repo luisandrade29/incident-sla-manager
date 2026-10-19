@@ -1,5 +1,5 @@
 // Fictional data for the fast SLA test (4-minute test process) and links the production Entitlement to the real process.
-// Idempotent. Run after the deploy: sf apex run -f scripts/apex/seed-sla-test.apex -o <org>
+// Idempotent. Run after the deploy.
 SlaProcess prod = [SELECT Id FROM SlaProcess WHERE Name = 'Incident_SLA_Process' AND IsActive = true LIMIT 1];
 SlaProcess fast = [SELECT Id FROM SlaProcess WHERE Name = 'Incident_SLA_Test_Process' AND IsActive = true LIMIT 1];
 

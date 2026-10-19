@@ -1,6 +1,5 @@
 // Sets the SLA alert supervisor (Default record of Incident_Alert_Setting__mdt) directly in the org.
 // Edit the values locally before running and NEVER commit a real address.
-// Executar: sf apex run -f scripts/apex/set-supervisor-email.apex -o <org>
 String supervisorEmail = 'supervisor@example.invalid';    // optional: empty disables the email (secondary channel)
 String supervisorUsername = 'supervisor@example.invalid'; // username of the user who receives the Task and bell notification
 

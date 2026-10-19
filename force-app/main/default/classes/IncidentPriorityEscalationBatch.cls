@@ -1,7 +1,6 @@
 /**
  * Raises the oldest High incidents to Critical when a queue has more open Critical + High incidents than its limit
  * (Escalation_Threshold__mdt). Each case is escalated at most once, and the reason goes in an internal CaseComment.
- * The plan is built in start() with one query; execute() only updates the chosen cases.
  * shortcut: reads up to 50,000 open incidents in start(); above that, aggregate per queue.
  */
 public with sharing class IncidentPriorityEscalationBatch implements Database.Batchable<SObject>, Database.Stateful {
