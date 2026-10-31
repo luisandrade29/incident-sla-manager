@@ -108,8 +108,7 @@ global with sharing class SLAStatusService {
     }
 
     /** Empty or unknown Type counts as Infrastructure, like the Incident_Assign_Owner flow. */
-    @TestVisible
-    static String normalizeType(String caseType) {
+    public static String normalizeType(String caseType) {
         return (caseType == 'Network' || caseType == 'Security') ? caseType : 'Infrastructure';
     }
 

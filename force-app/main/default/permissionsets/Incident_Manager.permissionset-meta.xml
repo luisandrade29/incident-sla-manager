@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <classAccesses><apexClass>IncidentDashboardController</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>SLAStatusService</apexClass><enabled>true</enabled></classAccesses>
     <description>Management access to IT incidents (Case, Entitlement, Record Type)</description>
     <hasActivationRequired>false</hasActivationRequired>

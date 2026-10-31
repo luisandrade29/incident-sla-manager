@@ -1,0 +1,19 @@
+<template>
+    <lightning-card title="Open incidents" icon-name="standard:case">
+        <div class="slds-p-horizontal_medium">
+            <lightning-combobox
+                label="Team"
+                value={selectedTeam}
+                options={teamOptions}
+                onchange={handleTeamChange}
+            ></lightning-combobox>
+
+            <p lwc:if={errorMessage} class="error slds-text-color_error slds-m-top_small">{errorMessage}</p>
+            <p lwc:if={isEmpty} class="empty slds-m-top_small">No open incidents.</p>
+
+            <template for:each={visibleIncidents} for:item="incident">
+                <c-incident-row key={incident.caseId} incident={incident} onassign={handleAssign}></c-incident-row>
+            </template>
+        </div>
+    </lightning-card>
+</template>

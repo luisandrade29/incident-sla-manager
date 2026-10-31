@@ -1,0 +1,13 @@
+<template>
+    <div class="slds-grid slds-grid_vertical-align-center slds-p-vertical_x-small slds-border_bottom">
+        <div class="slds-col slds-size_2-of-12 case-number">{incident.caseNumber}</div>
+        <div class="slds-col slds-size_3-of-12 team">{incident.team}</div>
+        <div class="slds-col slds-size_2-of-12">
+            <lightning-badge class="priority" label={incident.priority}></lightning-badge>
+        </div>
+        <div class={timeClass}>{timeLabel}</div>
+        <div class="slds-col slds-size_2-of-12 slds-text-align_right">
+            <lightning-button label="Assign to me" onclick={handleAssign}></lightning-button>
+        </div>
+    </div>
+</template>
