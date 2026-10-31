@@ -200,6 +200,19 @@ Example response (fictional data):
 - **Limits.** One query to `CaseMilestone` with `LIMIT 10000` (far from the query-row and 6 MB heap limits) plus one aggregate query for `no_sla`, both `WITH USER_MODE`. If the limit is reached, `truncated` is `true` and the counts are partial.
 - **Errors.** Body `{"code": "...", "error": "..."}`: `403 FORBIDDEN` when the user cannot read the data, `500 INTERNAL_ERROR` for anything unexpected (the exception message is never exposed). Other methods are rejected by the platform; verified against the org: `POST`, `PUT`, `PATCH` and `DELETE` return **405** with `Allow: GET,HEAD` and the platform's own body `[{"errorCode":"METHOD_NOT_ALLOWED","message":"HTTP Method 'PUT' not allowed. Allowed are GET,HEAD"}]` (a JSON array, not the `{code,error}` shape above).
 
+## Incident dashboard (LWC)
+
+![Incident dashboard: open incidents with team, priority and time left](docs/screenshots/incident-dashboard.png)
+
+The `incidentDashboard` component lists the open IT incidents with their team, priority and the minutes left on the SLA Milestone, most urgent first. Overdue Milestones are shown in red and incidents without an SLA go last. A **Team** filter narrows the list to Infrastructure, Network or Security, and each row has an **Assign to me** button that makes the current user the owner of the incident.
+
+- **Parent and child with events.** `incidentRow` renders one incident and only dispatches an `assign` event with the case id. The parent `incidentDashboard` listens to it, calls the Apex method, shows a toast and refreshes the list. The child never talks to Apex, so it stays easy to test.
+- **`@wire` with Apex.** The list comes from `@wire(getOpenIncidents)`, a `cacheable=true` method of `IncidentDashboardController` that runs one query with a Milestone subquery (`WITH USER_MODE`, capped at 200 rows). The team uses the same rule as the API and the assignment flow: an empty Type counts as Infrastructure.
+- **`refreshApex`.** Wired Apex results are cached, so after `assignToMe` succeeds the parent calls `refreshApex` on the stored wire result to show the new owner. For the same reason the minutes left can be stale until the next refresh.
+- **`assignToMe` is validated on the server.** The client sends only an id, so the method first checks that it is an open `Incident_IT` case, then updates the owner in user mode.
+- **Tests.** `npm run test:unit` runs 13 Jest tests: time formatting and the `assign` event in the row, and ordering, filtering, the empty and error states and the success and failure paths of the assignment in the parent. The Apex wire is mocked with `createApexTestWireAdapter` and `assignToMe` with `jest.fn()`. `IncidentDashboardControllerTest` covers the controller (team, priority, closed cases, minutes left, assignment and its rejection).
+- **Use it.** In Lightning App Builder, add the **Open Incidents** component to an App Page or the Home page. Users need the `Incident_Manager` permission set, which grants access to the Apex class.
+
 ## Known issues and design notes
 
 - **SLA engine delay of about 1 minute.** Milestone time triggers are processed once a minute, at the `:59` second. In the 4-minute test process the warning scheduled for minute 3 ran between 3m47s and 3m57s after the case was created, and the violation 47 to 57 seconds after the deadline. Do not expect second-level precision from warning or violation actions; the API treats "now is past the deadline" as breached for the same reason.
