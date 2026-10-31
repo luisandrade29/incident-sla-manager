@@ -219,7 +219,3 @@ Example response (fictional data):
 - **The permission set changes the user's default Record Type.** Assigning `Incident_Manager` makes "IT Incident" that user's default Case Record Type, so plain cases that user creates (for example in the Case Classifier demo) become incidents. Assign it only to people who work with incidents.
 - **DML enforces field-level security.** In this org even plain DML failed with "fields inaccessible" for fields the running user could not see, so everything that touches `Case` (including Apex tests) needs the permission set.
 - **Batch plan size.** The escalation plan reads up to 50 000 open Critical and High incidents in `start()`; beyond that, replace it with an aggregate per queue.
-
----
-
-Built with Claude Code as a pair-programming tool; design decisions, testing and review by me.
